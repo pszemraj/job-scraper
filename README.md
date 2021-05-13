@@ -10,10 +10,10 @@ Credit to the original of course, see below.
 
 
 ---
+## Original Repo
 
 ### Scraping jobs from Indeed or CWjobs
 
-## Original Repo
 The module job-scraper.py enables you to web scrape job postings from Indeed.co.uk or CWjobs.co.uk.
 
 Both require the package Beautiful Soup. For CWjobs, the Selenium web driver is also required. These can be installed as follows:
