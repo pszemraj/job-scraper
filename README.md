@@ -1,4 +1,4 @@
-# job-scraper
+# job-scraper *Swiss Edition*
 
 ---
 
