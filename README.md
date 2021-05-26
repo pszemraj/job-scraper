@@ -4,7 +4,21 @@
 
 ## Updates for CH
 
-In the "switzerland" folder is a link to an .ipynb file that also links to Colab. It merges the job_scraper.py code with Demo.ipynb, and makes relevant adjustments for [the Swiss version of Indeed](https://ch.indeed.com/?from=gnav-jobsearch--jasx), which is mostly just URL syntax.
+In the "switzerland" folder is a link to an .ipynb file that also links to Colab. It merges the job_scraper.py code with Demo.ipynb from the original project, and makes relevant adjustments for [the Swiss version of Indeed](https://ch.indeed.com/?from=gnav-jobsearch--jasx), which is mostly just URL syntax.
+
+### Added Features
+
+As the original just pulled and saved an excel file, additional features have been added to make the script more useful:
+
+#### 1 - Integration with Google Drive
+- files are now auto-saved to google drive with the day's date to keep track 
+- files have columns added for date and time pulled incase some sort of larger-scale database creation is useful
+
+#### 2 - Added Visualization
+
+2. 
+
+### Source 
 
 Credit to the original of course, see below.
 
