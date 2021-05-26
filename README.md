@@ -1,3 +1,4 @@
+
 # job-scraper *Swiss Edition*
 
 ---
@@ -19,18 +20,20 @@ As the original just pulled and saved an excel file, additional features have be
 - k-means visualization: text in field of choice (typically either the job title or the summary) is vectorized and then clustered via unsupervised k-means.
 - optimal number of k-means clusters determined via elbow method
 - Jobs are then plotted by their dimensionality reduced representation (currently: PCA) and colored by cluster. A custom plotting function (roughly analogous to that [TextHero](https://texthero.org/) includes built-in but with more features) displays the job data.
+- 
+![viz_sans_labels](https://user-images.githubusercontent.com/74869040/119703148-87382280-be56-11eb-94d9-b5627947cf4b.png)
 
-![viz with no labels](https://www.dropbox.com/s/our5c4mln5bxkpe/viz_sans_labels.png?dl=1)
 
 - Text with company name can be added to see distributions (*Note: README has static images, but the graphs are plotly scatterplots in HTML and interactive with tooltips*)
 
-![viz with company name labels](https://www.dropbox.com/s/becyw0xvefil4h5/viz_w_labels.png?dl=1)
+![viz_w_labels](https://user-images.githubusercontent.com/74869040/119703209-9d45e300-be56-11eb-88c2-453c395a60f3.png)
+
 
 #### 2 - Google Colab Tables
 
 - uses Google Colab's built-in table feature for dataframes, allowing the user to filter/sort/see job data without needing to exit the notebook
 
-![Job Table](https://www.dropbox.com/s/yv5qchp9bta3b4w/table_example.png?dl=1)
+![table_example](https://user-images.githubusercontent.com/74869040/119703251-a46cf100-be56-11eb-9c42-e0381b82be3b.png)
 
 ### Source 
 
