@@ -2,7 +2,7 @@
 
 ---
 
-## Updates for CH
+## Updates w.r.t. Original
 
 In the "switzerland" folder is a link to an .ipynb file that also links to Colab. It merges the job_scraper.py code with Demo.ipynb from the original project, and makes relevant adjustments for [the Swiss version of Indeed](https://ch.indeed.com/?from=gnav-jobsearch--jasx), which is mostly just URL syntax.
 
@@ -16,7 +16,21 @@ As the original just pulled and saved an excel file, additional features have be
 
 #### 2 - Added Visualization
 
-2. 
+- k-means visualization: text in field of choice (typically either the job title or the summary) is vectorized and then clustered via unsupervised k-means.
+- optimal number of k-means clusters determined via elbow method
+- Jobs are then plotted by their dimensionality reduced representation (currently: PCA) and colored by cluster. A custom plotting function (roughly analogous to that [TextHero](https://texthero.org/) includes built-in but with more features) displays the job data.
+
+![viz with no labels](https://www.dropbox.com/s/our5c4mln5bxkpe/viz_sans_labels.png?dl=1)
+
+- Text with company name can be added to see distributions (*Note: README has static images, but the graphs are plotly scatterplots in HTML and interactive with tooltips*)
+
+![viz with company name labels](https://www.dropbox.com/s/becyw0xvefil4h5/viz_w_labels.png?dl=1)
+
+#### 2 - Google Colab Tables
+
+- uses Google Colab's built-in table feature for dataframes, allowing the user to filter/sort/see job data without needing to exit the notebook
+
+![Job Table](https://www.dropbox.com/s/yv5qchp9bta3b4w/table_example.png?dl=1)
 
 ### Source 
 
