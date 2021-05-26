@@ -27,15 +27,16 @@ In the "switzerland" folder is a link to an .ipynb file that also links to Colab
 As the original just pulled and saved an excel file, additional features have been added to make the script more useful:
 
 #### 1 - Integration with Google Drive
-- files are now auto-saved to google drive with the day's date to keep track
+- files are now auto-saved to google drive folder as specified, includes the day's date to keep track
 - files have columns added for date and time pulled incase some sort of larger-scale database creation is useful
 
 #### 2 - Added Visualization
 
 - k-means visualization: text in field of choice (typically either the job title or the summary) is vectorized and then clustered via unsupervised k-means.
+- Current options for vectorization are TF-IDF or word2vec via the Google News pretrained dataset (available through Gensim)
 - optimal number of k-means clusters determined via elbow method
 - Jobs are then plotted by their dimensionality reduced representation (currently: PCA) and colored by cluster. A custom plotting function (roughly analogous to that [TextHero](https://texthero.org/) includes built-in but with more features) displays the job data.
--
+
 ![viz_sans_labels](https://user-images.githubusercontent.com/74869040/119703148-87382280-be56-11eb-94d9-b5627947cf4b.png)
 
 
@@ -44,11 +45,16 @@ As the original just pulled and saved an excel file, additional features have be
 ![viz_w_labels](https://user-images.githubusercontent.com/74869040/119703209-9d45e300-be56-11eb-88c2-453c395a60f3.png)
 
 
-#### 2 - Google Colab Tables
+#### 3 - Google Colab Tables
 
 - uses Google Colab's built-in table feature for dataframes, allowing the user to filter/sort/see job data without needing to exit the notebook
 
 ![table_example](https://user-images.githubusercontent.com/74869040/119703251-a46cf100-be56-11eb-9c42-e0381b82be3b.png)
+
+#### 4 - Link Shortening
+
+- Allows integration with the pyshorteners package for shortening scraped links (to use for the actual app)
+- Works with bit.ly
 
 ### Source
 
