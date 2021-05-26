@@ -21,7 +21,8 @@
 
 ## Updates w.r.t. Original
 
-In the "switzerland" folder is a link to an .ipynb file that also links to Colab. It merges the job_scraper.py code with Demo.ipynb from the original project, and makes relevant adjustments for [the Swiss version of Indeed](https://ch.indeed.com/?from=gnav-jobsearch--jasx), which is mostly just URL syntax.
+- In the "switzerland" folder is a link to an .ipynb file that also links to Colab. It merges the job_scraper.py code with Demo.ipynb from the original project, and makes relevant adjustments for [the Swiss version of Indeed](https://ch.indeed.com/?from=gnav-jobsearch--jasx), which is mostly just URL syntax.
+- a link to a Colab version is [here.](https://colab.research.google.com/drive/1kLxtsvL9uDZfRrzd9MC15libyMnc1Ear) Copy a version to your drive to try out. 
 
 ### Added Features
 
