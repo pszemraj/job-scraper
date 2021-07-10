@@ -1,5 +1,11 @@
 
-# job-scraper *Swiss Edition*
+# Scrape & Viz Job Postings: Switzerland
+
+Scrapes job postings from ch.indeed.com and visualizes them via various clustering and dimensionality techniques. As a result, it's easier to find similar jobs by title or description.
+
+---
+**Table of Contents**
+
 <!-- TOC -->
 
 - [job-scraper *Swiss Edition*](#job-scraper-swiss-edition)
