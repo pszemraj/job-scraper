@@ -33,7 +33,7 @@ result, it's easier to find similar jobs by title or description.
   with Demo.ipynb from the original project, and makes relevant adjustments
   for [the Swiss version of Indeed](https://ch.indeed.com/?from=gnav-jobsearch--jasx), which is mostly just URL syntax.
 - Currently, the CH version only scrapes data from Indeed
-- A link to a Colab version is [here.](https://colab.research.google.com/drive/1kLxtsvL9uDZfRrzd9MC15libyMnc1Ear) Copy a
+- A link to a Colab version is [here.](https://colab.research.google.com/gist/pszemraj/66449f84e6ed3011146292a7e9d14681/job-scraper-upgraded-ch-edition.ipynb) Copy a
   version to your drive to try out.
 
 ### Added Features
