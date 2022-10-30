@@ -8,7 +8,11 @@ import warnings
 from datetime import date, datetime
 from os.path import join
 
-logging.basicConfig(filename="scrape_and_viz.log", level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
+logging.basicConfig(
+    filename="scrape_and_viz.log",
+    level=logging.INFO,
+    format="%(asctime)s:%(levelname)s:%(message)s",
+)
 import gensim.downloader as api
 import numpy as np
 import pandas as pd
@@ -23,7 +27,7 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 
-def save_jobs_to_excel(jobs_list:list, file_path:str, verbose=False):
+def save_jobs_to_excel(jobs_list: list, file_path: str, verbose=False):
     """
     save_jobs_to_excel takes a list of dictionaries, each containing a job posting and saves it to an excel file
 
@@ -45,7 +49,12 @@ def save_jobs_to_excel(jobs_list:list, file_path:str, verbose=False):
     return df
 
 
-def shorten_URL_bitly(long_url:str,  ACCESS_TOKEN:str="", max_sleep_time:int=5, verbose=False, ):
+def shorten_URL_bitly(
+    long_url: str,
+    ACCESS_TOKEN: str = "",
+    max_sleep_time: int = 5,
+    verbose=False,
+):
     """
     shorten_URL_bitly takes a long url and returns a shortened url using the bitly API
 
@@ -95,8 +104,8 @@ def text_first_N(text, num=40):
 
 def find_optimal_k(
     input_matrix,
-    d_title:str="",
-    top_end:int=11,
+    d_title: str = "",
+    top_end: int = 11,
     show_plot=False,
     write_image=False,
     output_path_full: str = None,
@@ -148,8 +157,7 @@ def find_optimal_k(
         kmeans.fit(scaled_features)
         sse.append(kmeans.inertia_)
 
-
-    sse = [] # A list holds the SSE values for each k
+    sse = []  # A list holds the SSE values for each k
     for k in range(1, top_end):
         kmeans = KMeans(n_clusters=k, **kmeans_kwargs)
         kmeans.fit(scaled_features)
@@ -159,18 +167,35 @@ def find_optimal_k(
         list(zip(range(1, top_end), sse)), columns=["Number of Clusters", "SSE"]
     )
     title_k = f"Elbow Method for Optimal k - {d_title}"
-    f_k = px.line(kmeans_opt_df, x="Number of Clusters", y="SSE", title=title_k,
-                  template="presentation", height=600, width=800)
+    f_k = px.line(
+        kmeans_opt_df,
+        x="Number of Clusters",
+        y="SSE",
+        title=title_k,
+        template="presentation",
+        height=600,
+        width=800,
+    )
 
-    kl = KneeLocator(range(1, top_end), sse, curve="convex", direction="decreasing") # find the optimal k
+    kl = KneeLocator(
+        range(1, top_end), sse, curve="convex", direction="decreasing"
+    )  # find the optimal k
     onk = kl.elbow
 
     if onk is None:
-        warnings.warn("No elbow found - Returning # of clusters as max allowed ( {} )".format(top_end))
+        warnings.warn(
+            "No elbow found - Returning # of clusters as max allowed ( {} )".format(
+                top_end
+            )
+        )
         return top_end
 
     elif onk == top_end:
-        warnings.warn("Elbow found at max allowed # of clusters ( {} ) - consider increasing top_end and re-running".format(top_end))
+        warnings.warn(
+            "Elbow found at max allowed # of clusters ( {} ) - consider increasing top_end and re-running".format(
+                top_end
+            )
+        )
     logging.info(f"optimal k is {onk}")
     if verbose:
         print("Optimal number of clusters is {}".format(onk))
@@ -185,7 +210,13 @@ def find_optimal_k(
     return onk
 
 
-def viz_job_data(viz_df:pd.DataFrame, text_col_name:str, save_plot=False, h:int=720, verbose=False):
+def viz_job_data(
+    viz_df: pd.DataFrame,
+    text_col_name: str,
+    save_plot=False,
+    h: int = 720,
+    verbose=False,
+):
     """
     viz_job_data takes a dataframe and returns a plotly figure of the top 10 most common words
 
@@ -246,7 +277,9 @@ def viz_job_data(viz_df:pd.DataFrame, text_col_name:str, save_plot=False, h:int=
     logging.info("plotting complete" + plot_title)
 
 
-def load_gensim_word2vec(word2vec_model:str="'glove-wiki-gigaword-300", verbose=False):
+def load_gensim_word2vec(
+    word2vec_model: str = "'glove-wiki-gigaword-300", verbose=False
+):
 
     logging.info("loading gensim word2vec model {}".format(word2vec_model))
     loaded_model = api.load(word2vec_model)
@@ -270,8 +303,7 @@ def load_gensim_word2vec(word2vec_model:str="'glove-wiki-gigaword-300", verbose=
     return loaded_model
 
 
-
-def get_vector_freetext(input_text: str, model, verbose:int=0, cutoff:int=2):
+def get_vector_freetext(input_text: str, model, verbose: int = 0, cutoff: int = 2):
     """
     get_vector_freetext takes a string and returns a vector of the average word2vec vector for each word in the string
 
@@ -316,7 +348,13 @@ def get_vector_freetext(input_text: str, model, verbose:int=0, cutoff:int=2):
 
 
 def viz_job_data_word2vec(
-    viz_df: pd.DataFrame, text_col_name: str, save_plot=False, h: int=720, query_name: str="", show_text=False, max_clusters:int = 15
+    viz_df: pd.DataFrame,
+    text_col_name: str,
+    save_plot=False,
+    h: int = 720,
+    query_name: str = "",
+    show_text=False,
+    max_clusters: int = 15,
 ):
     """
     viz_job_data_word2vec takes a dataframe and returns a plotly figure of the top 10 most common words
@@ -331,7 +369,7 @@ def viz_job_data_word2vec(
         max_clusters (int, optional): maximum number of clusters to use. Defaults to 15 for interpretability.
     """
     today = date.today()
-    td_str = today.strftime("%b-%d-%Y") # date string
+    td_str = today.strftime("%b-%d-%Y")  # date string
 
     viz_df["avg_vec"] = viz_df[text_col_name].apply(
         get_vector_freetext, args=(w2v_model,)
@@ -362,7 +400,11 @@ def viz_job_data_word2vec(
     viz_df["pca"] = viz_df["avg_vec"].pipe(hero.pca)
 
     # generate list of column names for hover_data
-    hv_list = [col for col in viz_df.columns if col not in ["avg_vec", "pca", "tfidf", "summary"]]
+    hv_list = [
+        col
+        for col in viz_df.columns
+        if col not in ["avg_vec", "pca", "tfidf", "summary"]
+    ]
 
     # reformat data so don't have to use texthero built-in plotting
     df_split_pca = pd.DataFrame(viz_df["pca"].to_list(), columns=["pca_x", "pca_y"])
@@ -413,14 +455,15 @@ def viz_job_data_word2vec(
         # plot it generates
         _title = plot_title + query_name + "_" + text_col_name + ".html"
         logging.info("Saving plot as {}".format(_title))
-        fig_w2v.write_html(_title,
+        fig_w2v.write_html(
+            _title,
             include_plotlyjs=True,
         )
 
     logging.info("plot generated - ", datetime.now())
 
 
-def load_google_USE(url: str="https://tfhub.dev/google/universal-sentence-encoder/4"):
+def load_google_USE(url: str = "https://tfhub.dev/google/universal-sentence-encoder/4"):
     """
     load_google_USE loads the google USE model from the URL
 
@@ -585,7 +628,7 @@ def find_CHjobs_from(
     job_type=None,
     language=None,
     verbose=False,
-    filename:str=None,
+    filename: str = None,
 ):
     """
 
@@ -609,11 +652,23 @@ def find_CHjobs_from(
 
     """
 
-    assert website in ["indeed", "indeed_default"], "website not supported - use 'indeed' or 'indeed_default'"
-    assert job_type in ["internship", "fulltime", "permanent", None], "job_type not supported - use 'internship', 'fulltime', or 'permanent'"
-    assert len(language) == 2, "language not supported - use 'en' or 'de' or other languages.. 'fr'? ew"
+    assert website in [
+        "indeed",
+        "indeed_default",
+    ], "website not supported - use 'indeed' or 'indeed_default'"
+    assert job_type in [
+        "internship",
+        "fulltime",
+        "permanent",
+        None,
+    ], "job_type not supported - use 'internship', 'fulltime', or 'permanent'"
+    assert (
+        len(language) == 2
+    ), "language not supported - use 'en' or 'de' or other languages.. 'fr'? ew"
     # TODO: add other variables to assert
-    filename = filename or date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
+    filename = (
+        filename or date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
+    )
     if website == "indeed":
         sp_search = load_indeed_jobs_CH(job_query, job_type=job_type, language=language)
         job_soup = sp_search.get("job_soup")
@@ -648,7 +703,9 @@ def find_CHjobs_from(
     return job_df
 
 
-def load_indeed_jobs_CH(job_query, job_type=None, language:str=None, run_default=False):
+def load_indeed_jobs_CH(
+    job_query, job_type=None, language: str = None, run_default=False
+):
     i_website = "https://ch.indeed.com/Stellen?"
     def_website = "https://ch.indeed.com/Stellen?q=Switzerland+English&jt=internship"
     if run_default:
@@ -892,8 +949,6 @@ if __name__ == "__main__":
 
     if using_gensim_w2v:
         w2v_model = load_gensim_word2vec()
-
-
 
     jq1 = "data"  # @param {type:"string"}
     jt1 = "internship"  # @param {type:"string"}
