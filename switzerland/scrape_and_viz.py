@@ -567,6 +567,12 @@ def find_CHjobs_from(
     verbose=False,
     filename=date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls",
 ):
+
+    assert website in ["indeed", "indeed_default"], "website not supported - use 'indeed' or 'indeed_default'"
+    assert job_type in ["internship", "fulltime", "permanent", None], "job_type not supported - use 'internship', 'fulltime', or 'permanent'"
+    assert len(language) == 2, "language not supported - use 'en' or 'de' or other languages.. 'fr'? ew"
+    # TODO: add other variables to assert
+    filename = filename or date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
     if website == "indeed":
         sp_search = load_indeed_jobs_CH(job_query, job_type=job_type, language=language)
         job_soup = sp_search.get("job_soup")
