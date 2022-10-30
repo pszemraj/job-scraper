@@ -3,10 +3,9 @@ import pprint as pp
 import random
 import time
 import urllib
-from datetime import date
-from datetime import datetime
-from os.path import join
 import warnings
+from datetime import date, datetime
+from os.path import join
 
 import gensim.downloader as api
 import numpy as np
@@ -175,7 +174,17 @@ def find_optimal_k(
     return onk
 
 
-def viz_job_data(viz_df, text_col_name, save_plot=False, h=720):
+def viz_job_data(viz_df:pd.DataFrame, text_col_name:str, save_plot=False, h:int=720, verbose=False):
+    """
+    viz_job_data takes a dataframe and returns a plotly figure of the top 10 most common words
+
+    Args:
+        viz_df (pd.DataFrame): _description_
+        text_col_name (str): _description_
+        save_plot (bool, optional): _description_. Defaults to False.
+        h (int, optional): _description_. Defaults to 720.
+        verbose (bool, optional): _description_. Defaults to False.
+    """
     today = date.today()
     # Month abbreviation, day and year
     td_str = today.strftime("%b-%d-%Y")
@@ -186,10 +195,7 @@ def viz_job_data(viz_df, text_col_name, save_plot=False, h=720):
 
     viz_df["pca"] = viz_df["tfidf"].pipe(hero.pca)
 
-    hv_list = list(viz_df.columns)
-    hv_list.remove("tfidf")
-    hv_list.remove("pca")
-    hv_list.remove("summary")
+    hv_list = [x for x in viz_df.columns if x not in ["tfidf", "kmeans", "pca"]]
 
     plot_title = td_str + " Vizualize Companies by {} Data".format(text_col_name)
 
@@ -200,10 +206,9 @@ def viz_job_data(viz_df, text_col_name, save_plot=False, h=720):
     viz_df = pd.concat([viz_df, df_split_pca], axis=1)  # merge dataframes
 
     # plot pca data
-    # texthero also features pther ways to reduce dimensions besides pca, see docs
 
     w = int(h * (4 / 3))
-
+    labels = {"pca_x": "PCA X", "pca_y": "PCA Y", "kmeans": "KMeans Cluster"}
     fig_s = px.scatter(
         viz_df,
         x="pca_x",
@@ -211,6 +216,7 @@ def viz_job_data(viz_df, text_col_name, save_plot=False, h=720):
         color="kmeans",
         hover_data=hv_list,
         title=plot_title,
+        labels=labels,
         height=h,
         width=w,
         template="plotly_dark",
@@ -220,12 +226,13 @@ def viz_job_data(viz_df, text_col_name, save_plot=False, h=720):
     if save_plot:
         fig_s.write_html(plot_title + ".html", include_plotlyjs=True)
 
-    print("plot generated - ", datetime.now())
+    if verbose:
+        print("plot generated - ", datetime.now())
 
 
-def load_gensim_word2vec(wvmodel="word2vec-google-news-300", verbose=False):
+def load_gensim_word2vec(word2vec_model:str="word2vec-google-news-300", verbose=False):
     # another option is the smaller: api.load("word2vec-ruscorpora-300")
-    loaded_model = api.load(wvmodel)
+    loaded_model = api.load(word2vec_model)
 
     print("loaded data for word2vec - ", datetime.now())
 
