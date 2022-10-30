@@ -9,20 +9,20 @@ result, it's easier to find similar jobs by title or description.
 <!-- TOC -->
 
 - [job-scraper *Swiss Edition*](#job-scraper-swiss-edition)
-    - [Updates w.r.t. Original](#updates-wrt-original)
-        - [Added Features](#added-features)
-            - [1 - Integration with Google Drive](#1---integration-with-google-drive)
-            - [2 - Added Visualization](#2---added-visualization)
-            - [3 - Google Colab Tables](#3---google-colab-tables)
-            - [4 - Link Shortening](#4---link-shortening)
-    - [Example](#example)
-    - [Details on Querying](#details-on-querying)
-    - [Source](#source)
-    - [Original Repo](#original-repo)
-        - [Scraping jobs from Indeed or CWjobs](#scraping-jobs-from-indeed-or-cwjobs)
-        - [Terms and conditions](#terms-and-conditions)
-        - [Using the selenium web driver](#using-the-selenium-web-driver)
-        - [Accompanying blog post](#accompanying-blog-post)
+  - [Updates w.r.t. Original](#updates-wrt-original)
+    - [Added Features](#added-features)
+      - [1 - Integration with Google Drive](#1---integration-with-google-drive)
+      - [2 - Added Visualization](#2---added-visualization)
+      - [3 - Google Colab Tables](#3---google-colab-tables)
+      - [4 - Link Shortening](#4---link-shortening)
+  - [Example](#example)
+  - [Details on Querying](#details-on-querying)
+  - [Source](#source)
+  - [Original Repo](#original-repo)
+    - [Scraping jobs from Indeed or CWjobs](#scraping-jobs-from-indeed-or-cwjobs)
+    - [Terms and conditions](#terms-and-conditions)
+    - [Using the selenium web driver](#using-the-selenium-web-driver)
+    - [Accompanying blog post](#accompanying-blog-post)
 
 <!-- /TOC -->
 ---
@@ -80,52 +80,64 @@ As the original just pulled and saved an excel file, additional features have be
 In the section below all the function definitions (i.e. *main*), the code following will return 50 job postings for
 language = en, job type = internship, and job query = "data":
 
-```
+```python
 # define input params for query
-desired_characs = ['titles', 'companies', 'links', 'date_listed', 'summary']
-jq1="data"
+desired_characs = ["titles", "companies", "links", "date_listed", "summary"]
+jq1 = "data"
 jt1 = "internship"
 lan = "en"
 
 # scrape data
-chdf1 = find_CHjobs_from(website="indeed", desired_characs=desired_characs,
-                         job_query=jq1, job_type=jt1, language=lan)
+chdf1 = find_CHjobs_from(
+    website="indeed",
+    desired_characs=desired_characs,
+    job_query=jq1,
+    job_type=jt1,
+    language=lan,
+)
 # process output scraped data
-q1_processed = indeed_postprocess(chdf1, query_term=jq1, query_jobtype=jt1,
-                       shorten_links=False, download_excel=True)
+q1_processed = indeed_postprocess(
+    chdf1, query_term=jq1, query_jobtype=jt1, shorten_links=False, download_excel=True
+)
 # display Colab data table
-data_table.DataTable(indeed_datatable(q1_processed),
-                     include_index=False, num_rows_per_page=20)
+data_table.DataTable(
+    indeed_datatable(q1_processed), include_index=False, num_rows_per_page=20
+)
 
 # generate viz
 viz1 = q1_processed.copy()
 viz1.drop(columns=["links", "short_link"], inplace=True)
-viz_job_data_word2vec(viz1, "summary", save_plot=True, show_text=True,
-                      query_name=jt1 + " in " + jq1)
+viz_job_data_word2vec(
+    viz1, "summary", save_plot=True, show_text=True, query_name=jt1 + " in " + jq1
+)
+
 ```
 
 ## Details on Querying
 
 The following describes possible input params to **find_CHjobs_from()**:
 
-```
-    - Website: to specify which website to search
-        - (options: 'indeed' or 'indeed_default')
-    - job_query: words that you want to narrow down the jobs to.
-        - for example 'data'
-    - job_type:
-        - 'internship' or 'fulltime' or 'permanent'
-    - language:
-        - 'en' or 'de' or other languages.. 'fr'? ew
-    - Desired_characs: what columns of data do you want to extract? options are:
-        - 'titles', 'companies', 'links', 'date_listed', 'summary'
-    - Filename: default is "JS_test_results.xls", can be changed to whatever
-```
+| input param | possible values | default value | description |
+|-------------|-----------------|---------------|-------------|
+| website     | 'indeed' or 'indeed_default' | 'indeed_default' | which website to search |
+| job_query | words that you want to narrow down the jobs to | 'data' | for example 'data' |
+| job_type | 'internship' or 'fulltime' or 'permanent' | 'internship' | |
+| language | 'en' or 'de' or other languages.. 'fr'? ew | 'en' | |
+| desired_characs | 'titles', 'companies', 'links', 'date_listed', 'summary' | 'titles', 'companies', 'links', 'date_listed', 'summary' | what columns of data do you want to extract? |
+| filename | default is "JS_test_results.xls", can be changed to whatever | 'JS_test_results.xls' | |
+
+## Source
+
+- [Indeed](http://www.indeed.com/)
+- [CWJobs](http://www.cwjobs.co.uk/)
+
+## Original Repo
+
+- [Job-Scraper](<https://github.com/chris-lovejoy/job-scraper>) by chris-lovejoy
 
 ## Source
 
 Credit to the original repo and medium post - see below.
-
 
 ---
 *Everything below here is a copy of the original repo README*
@@ -140,8 +152,8 @@ Both require the package Beautiful Soup. For CWjobs, the Selenium web driver is 
 follows:
 
 ```bash
-$ pip install beautifulsoup4
-$ pip install selenium
+pip install beautifulsoup4
+pip install selenium
 ```
 
 To use this module, import the job_scraper.py file and call the funciton "find_jobs_from()", which takes in several
