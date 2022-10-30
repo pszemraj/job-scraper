@@ -636,7 +636,7 @@ def find_CHjobs_from(
     website: str,
     desired_characs,
     job_query: str,
-    job_type: str=None,
+    job_type: str = None,
     language: str = None,
     output_filename: str = None,
     verbose=False,
@@ -679,7 +679,8 @@ def find_CHjobs_from(
     ), "language not supported - use 'en' or 'de' or other languages.. 'fr'? ew"
     # TODO: add other variables to assert
     output_filename = (
-        output_filename or date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
+        output_filename
+        or date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
     )
     if website == "indeed":
         sp_search = load_indeed_jobs_CH(job_query, job_type=job_type, language=language)
@@ -716,7 +717,7 @@ def find_CHjobs_from(
 
 
 def load_indeed_jobs_CH(
-    job_query: str, job_type: str=None, language: str = None, run_default=False
+    job_query: str, job_type: str = None, language: str = None, run_default=False
 ):
     """
     load_indeed_jobs_CH is a function that loads the indeed job search page for Switzerland
