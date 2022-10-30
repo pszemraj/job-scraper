@@ -399,7 +399,6 @@ def viz_job_data_word2vec(
     )
     viz_df["pca"] = viz_df["avg_vec"].pipe(hero.pca)
 
-    # generate list of column names for hover_data
     hv_list = [
         col
         for col in viz_df.columns
@@ -482,15 +481,31 @@ def load_google_USE(url: str = "https://tfhub.dev/google/universal-sentence-enco
 
 
 def vizjobs_googleUSE(
-    viz_df,
-    text_col_name,
+    viz_df: pd.DataFrame,
     USE_embedding,
+    text_col_name: str,
     save_plot=False,
-    h=720,
-    query_name="",
+    h: int = 720,
+    query_name: str = "",
     show_text=False,
+    max_clusters: int = 15,
     viz_type="TSNE",
 ):
+    """
+    vizjobs_googleUSE takes a dataframe and returns a plotly figure of the top 10 most common words via google USE
+
+    Args:
+        viz_df (pd.DataFrame): dataframe to visualize
+        USE_embedding (_type_): google USE embedding
+        text_col_name (str): name of the column to visualize (must be a string)
+        save_plot (bool, optional): save plot to image. Defaults to False.
+        h (int, optional): height of plot. Defaults to 720. The width is scaled based on the height.
+        query_name (str, optional): name of the original query (to use in the title). Defaults to "".
+        show_text (bool, optional): plot text in the plot. Defaults to False.
+        max_clusters (int, optional): maximum number of clusters to use. Defaults to 15 for interpretability.
+        viz_type (str, optional): type of dimensionality reduction to use. Defaults to "TSNE".
+
+    """
     today = date.today()
     # Month abbreviation, day and year
     td_str = today.strftime("%b-%d-%Y")
@@ -500,8 +515,6 @@ def vizjobs_googleUSE(
     use = np.array(embeddings).tolist()  # add lists as dataframe column
     viz_df["use_vec"] = use
 
-    # get optimal number of kmeans. limit max to 15 for interpretability
-    max_clusters = 15
     if len(viz_df["use_vec"]) < max_clusters:
         max_clusters = len(viz_df["use_vec"])
 
@@ -524,8 +537,6 @@ def vizjobs_googleUSE(
         )
         .astype(str)
     )
-
-    # use the vector for dimensionality reduction
 
     if viz_type.lower() == "tsne":
         viz_df["TSNE"] = viz_df["use_vec"].pipe(hero.tsne, random_state=42)
@@ -622,13 +633,13 @@ def vizjobs_googleUSE(
 
 
 def find_CHjobs_from(
-    website,
+    website: str,
     desired_characs,
-    job_query,
-    job_type=None,
-    language=None,
+    job_query: str,
+    job_type: str=None,
+    language: str = None,
+    output_filename: str = None,
     verbose=False,
-    filename: str = None,
 ):
     """
 
@@ -648,7 +659,8 @@ def find_CHjobs_from(
             - 'en' or 'de' or other languages.. 'fr'? ew
         - desired_characs: what columns of data do you want to extract? options are:
             - 'titles', 'companies', 'links', 'date_listed', 'summary'
-        - Filename: name of the file to save the data to. If None, then it will default to date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
+        - output_filename: name of the file to save the data to. If None, then it will default to date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
+        - verbose: if True, then it will print out the progress of the scraping
 
     """
 
@@ -666,8 +678,8 @@ def find_CHjobs_from(
         len(language) == 2
     ), "language not supported - use 'en' or 'de' or other languages.. 'fr'? ew"
     # TODO: add other variables to assert
-    filename = (
-        filename or date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
+    output_filename = (
+        output_filename or date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
     )
     if website == "indeed":
         sp_search = load_indeed_jobs_CH(job_query, job_type=job_type, language=language)
@@ -692,11 +704,11 @@ def find_CHjobs_from(
             job_soup, desired_characs, uURL=URL_used
         )
 
-    job_df = save_jobs_to_excel(jobs_list, filename)
+    job_df = save_jobs_to_excel(jobs_list, output_filename)
 
     logging.info(
         "{} new job postings retrieved from {}. Stored in {}.".format(
-            num_listings, website, filename
+            num_listings, website, output_filename
         )
     )
 
@@ -704,8 +716,20 @@ def find_CHjobs_from(
 
 
 def load_indeed_jobs_CH(
-    job_query, job_type=None, language: str = None, run_default=False
+    job_query: str, job_type: str=None, language: str = None, run_default=False
 ):
+    """
+    load_indeed_jobs_CH is a function that loads the indeed job search page for Switzerland
+
+    Args:
+        job_query (str): the job query to search for
+        job_type (str, optional):   'internship' or 'fulltime' or 'permanent'
+        language (str, optional):   'en' or 'de' or other languages.. 'fr'? ew
+        run_default (bool, optional):  if True, then it will run the default search
+
+    Returns:
+        dict: dictionary containing the job_soup and the query_URL
+    """
     i_website = "https://ch.indeed.com/Stellen?"
     def_website = "https://ch.indeed.com/Stellen?q=Switzerland+English&jt=internship"
     if run_default:
@@ -741,18 +765,14 @@ def load_indeed_jobs_CH(
         soup = BeautifulSoup(page.content, "html.parser")
         job_soup = soup.find(id="resultsCol")
 
-    # return the job soup
-
     soup_results = {"job_soup": job_soup, "query_URL": url}
     return soup_results
 
 
-def_URL = "https://ch.indeed.com/Stellen?" + "ADD_queries_here"
-
-
 def extract_job_information_indeedCH(
-    job_soup, desired_characs, uURL=def_URL, verbose=False, print_all=False
+    job_soup, desired_characs, uURL=None, verbose=False, print_all=False
 ):
+    uURL = uURL or "https://ch.indeed.com/Stellen?" + "ADD_queries_here"
     # job_elems = job_soup.find_all('div', class_='mosaic-zone-jobcards')
     job_elems = job_soup.find_all("div", class_="job_seen_beacon")
 
@@ -762,7 +782,8 @@ def extract_job_information_indeedCH(
 
     with open("job_elements.txt", "w") as f:
         # save to text file for investigation
-        logging.info(job_elems, file=f)
+        f.write(str(job_elems))
+        logging.info("job_elems saved to job_elements.txt")
 
     cols = []
     extracted_info = []
@@ -813,6 +834,16 @@ def extract_job_information_indeedCH(
 
 
 def extract_job_title_indeed(job_elem, verbose=False):
+    """
+    extract_job_title_indeed - extracts the job title from the indeed job element
+
+    Args:
+        job_elem (BeautifulSoup object): the job element to extract the title from
+        verbose (bool, optional):  if True, then it will print the extracted title
+
+    Returns:
+        str: the extracted job title
+    """
     title_elem = job_elem.select_one("span[title]").text
     if verbose:
         logging.info(title_elem)
@@ -824,19 +855,37 @@ def extract_job_title_indeed(job_elem, verbose=False):
 
 
 def extract_company_indeed(job_elem):
+    """
+    extract_company_indeed - extracts the company name from the indeed job element
+
+    Args:
+        job_elem (BeautifulSoup object): the job element to extract the company name from
+
+    Returns:
+        str: the extracted company name
+    """
     company_elem = job_elem.find("span", class_="companyName")
     company = company_elem.text.strip()
     return company
 
 
 def extract_link_indeedCH(job_elem, uURL):
-    # some manual shenanigans occur here
-    # working example https://ch.indeed.com/Stellen?q=data&jt=internship&lang=en&vjk=49ed864bd5e422fb
+    """
+    extract_link_indeedCH - extracts the link to the job posting from the indeed job element
+            some manual shenanigans occur here
+            working example https://ch.indeed.com/Stellen?q=data&jt=internship&lang=en&vjk=49ed864bd5e422fb
+    Args:
+        job_elem (BeautifulSoup object): the job element to extract the link from
+        uURL (str, optional): the URL of the search query
+
+    Returns:
+        str: the extracted link to the job posting
+    """
+    #
 
     link = job_elem.find("a")["href"]
     uURL_list = uURL.split("&fromage=last")
     link = uURL_list[0] + "&" + link
-    # replace some text so that the link has a virtual job key. Found via trial and error
     return link.replace("/rc/clk?jk=", "vjk=")
 
 
@@ -856,37 +905,59 @@ def extract_date_indeed(job_elem):
 
 
 def extract_summary_indeed(job_elem):
+    """
+    extract_summary_indeed extracts the summary of the job posting
+
+    Args:
+        job_elem (bs4.element.Tag): bs4 element containing the job information
+
+    Returns:
+        summary (str): summary of the job posting
+    """
     summary_elem = job_elem.find("div", class_="job-snippet")
     summary = summary_elem.text.strip()
     return summary
 
 
 def indeed_postprocess(
-    i_df, query_term, query_jobtype, verbose=False, shorten_links=False
+    indeed_df, query_term, query_jobtype, verbose=False, shorten_links=False
 ):
+    """
+    indeed_postprocess - postprocesses the indeed dataframe
+
+    Args:
+        indeed_df (pandas dataframe): the indeed dataframe to postprocess
+        query_term (str): the query term used to search indeed
+        query_jobtype (str): the job type used to search indeed
+        verbose (bool, optional): . Defaults to False.
+        shorten_links (bool, optional): if True, then it will shorten the links. Defaults to False.
+
+    Returns:
+        pandas dataframe: the postprocessed indeed dataframe
+    """
     logging.info("Starting postprocess - ", datetime.now())
 
     # apply texthero cleaning
-    i_df["titles"] = hero.clean(i_df["titles"])
-    i_df["summary"] = hero.clean(i_df["summary"])
+    indeed_df["titles"] = hero.clean(indeed_df["titles"])
+    indeed_df["summary"] = hero.clean(indeed_df["summary"])
 
     # use bit.ly to shorten links
     if shorten_links:
         try:
-            len(i_df["short_link"])
+            len(indeed_df["short_link"])
             logging.info("found values for short_link, not-recreating")
         except:
             logging.info("no values exist for short_link, creating them now")
             # there is a random delay to not overload APIs, max rt is 5s * num_rows
-            i_df["short_link"] = i_df["links"].apply(shorten_URL_bitly)
+            indeed_df["short_link"] = indeed_df["links"].apply(shorten_URL_bitly)
     else:
-        i_df["short_link"] = "not_created"
+        indeed_df["short_link"] = "not_created"
 
     # save file to excel
     rn = datetime.now()
     i_PP_date = rn.strftime("_%m.%d.%Y-%H-%M_")
-    i_df["date_pulled"] = rn.strftime("%m.%d.%Y")
-    i_df["time_pulled"] = rn.strftime("%H:%M:%S")
+    indeed_df["date_pulled"] = rn.strftime("%m.%d.%Y")
+    indeed_df["time_pulled"] = rn.strftime("%H:%M:%S")
     out_name = (
         "JS_DB_"
         + "query=[term(s)="
@@ -897,27 +968,38 @@ def indeed_postprocess(
         + i_PP_date
         + ".xlsx"
     )
-    i_df.to_excel(out_name)
+    indeed_df.to_excel(out_name)
     if verbose:
         logging.info("Saved {} - ".format(out_name), datetime.now())
 
     # download if requested
-    return i_df
+    return indeed_df
 
 
-def indeed_datatable(i_df, count_what="companies", freq_n=10):
+def indeed_datatable(indeed_df, count_what="companies", freq_n=10):
+    """
+    indeed_datatable - creates a datatable of the top companies or job titles
+
+    Args:
+        indeed_df (pandas dataframe): the indeed dataframe to create the datatable from
+        count_what (str, optional): what to count, either "companies" or "titles". Defaults to "companies".
+        freq_n (int, optional): how many to count. Defaults to 10.
+
+    Returns:
+        datatable: the datatable of the top companies or job titles
+    """
     # basically just wrote this to reduce code down below
     # depends on the colab data_table.DataTable()
 
     logging.info("Count of column '{}' appearances in search:\n".format(count_what))
-    comp_list_1 = i_df[count_what].value_counts()
+    comp_list_1 = indeed_df[count_what].value_counts()
     pp.pprint(comp_list_1.head(freq_n), compact=True)
 
-    i_df_disp = i_df.copy()
-    i_df_disp["summary_short"] = i_df_disp["summary"].apply(text_first_N)
-    i_df_disp.drop(columns=["links", "summary"], inplace=True)  # drop verbose columns
+    display_df = indeed_df.copy()
+    display_df["summary_short"] = display_df["summary"].apply(text_first_N)
+    display_df.drop(columns=["links", "summary"], inplace=True)  # drop verbose columns
 
-    return i_df_disp
+    return display_df
 
 
 # define whether or not to shorten links
