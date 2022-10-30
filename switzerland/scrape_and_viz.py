@@ -6,6 +6,7 @@ import urllib
 from datetime import date
 from datetime import datetime
 from os.path import join
+import warnings
 
 import gensim.downloader as api
 import numpy as np
@@ -21,75 +22,100 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 
-def save_jobs_to_excel(jobs_list, filename, verbose=False):
-    # i have no idea what this function does
-    jobs = pd.DataFrame(jobs_list)
-    jobs.to_excel(filename)
+def save_jobs_to_excel(jobs_list:list, file_path:str, verbose=False):
+    """
+    save_jobs_to_excel takes a list of dictionaries, each containing a job posting and saves it to an excel file
+
+    Args:
+        jobs_list (list): list of dictionaries, each containing a job posting
+        file_path (str): path to save the excel file to
+        verbose (bool, optional): Defaults to False.
+
+    Returns:
+        pd.DataFrame: dataframe of the jobs_list
+    """
+    df = pd.DataFrame(jobs_list)
+    df.to_excel(file_path)
 
     if verbose:
-        print("saved the following to excel with filename {}: \n".format(filename))
+        print("saved the following to excel with filename {}: \n".format(file_path))
 
-        print(jobs.info())
-    return jobs
+        print(df.info())
+    return df
 
 
-def shorten_URL_bitly(long_url, verbose=False):
-    # requires free account / API token. https://bitly.com/
-    # generate short URLs from the ones scraped
+def shorten_URL_bitly(long_url:str,  ACCESS_TOKEN:str="", max_sleep_time:int=5, verbose=False, ):
+    """
+    shorten_URL_bitly takes a long url and returns a shortened url using the bitly API
 
-    time.sleep(random.randint(1, 5))  # don't overload API
+                    requires free account / API token. https://bitly.com/
 
-    ACCESS_TOKEN = "hahah_get_ur_own"
+    Args:
+        long_url (str): long url to shorten
+        ACCESS_TOKEN (str, optional): bitly API token. Defaults to "".
+        max_sleep_time (int, optional): max time to sleep between requests. Defaults to 5.
+        verbose (bool, optional): Defaults to False.
 
-    # Shorten long URL
+    Returns:
+        str: shortened url
+    """
+
+    time.sleep(random.randint(1, max_sleep_time))  # don't overload API
+
     try:
         s = pyshorteners.Shortener(api_key=ACCESS_TOKEN)
         short_url = s.bitly.short(long_url)
 
         if verbose:
             print("Short URL is {}".format(short_url))
-    except:
-        print(
-            "Error accessing API for key {} and fn shorten_URL_bitly".format(
-                ACCESS_TOKEN
-            )
-        )
-        print("Try updating API key / checking fn. Returning original url")
+    except Exception as e:
+        print("Error: {}".format(e))
         short_url = long_url
 
     return short_url
 
 
 def text_first_N(text, num=40):
-    # returns the first N chars in text, i.e. for long job descriptions
-    # for use with Pandas .apply() function
+    """
+    text_first_N takes a string and returns the first N characters
 
-    text = str(text)  # convert to string
+    Args:
+        text (str): string to shorten
+        num (int, optional): number of characters to return. Defaults to 40.
 
-    if isinstance(text, list):
-        text = " ".join(text)
+    Returns:
+        str: first N characters of text
+    """
 
-    if len(text) <= num:
-        return text
-    else:
-        short_text = text[:num]
-        return short_text + ".."
+    text = " ".join(text) if isinstance(text, list) else str(text)
+
+    return text[:num] + "..." if len(text) > num else text
 
 
-def optimal_num_clustas(
+def find_optimal_k(
     input_matrix,
-    d_title,
-    top_end=11,
+    d_title:str="",
+    top_end:int=11,
     show_plot=False,
     write_image=False,
-    output_path_full=None,
+    output_path_full: str = None,
+    verbose=False,
 ):
-    # given 'input_matrix' as a pandas series containing a list / vector in each
-    # row, find the optimal number of k_means clusters to cluster them using
-    # the elbow method
+    """
+    find_optimal_k takes a matrix and returns the optimal number of clusters using the elbow method
 
-    # 'top_end' is the max number of clusters. If having issues, look at the plot
-    # and adjust accordingly
+    Args:
+        input_matrix (np.array): matrix to cluster
+        d_title (str): title of the data
+        top_end (int, optional): max number of clusters to test. Defaults to 11.
+        show_plot (bool, optional): show plot of elbow method. Defaults to False.
+        write_image (bool, optional): write plot to image. Defaults to False.
+        output_path_full (str, optional): path to write image to. Defaults to None.
+        verbose (bool, optional): Defaults to False.
+
+    Returns:
+        int: optimal number of clusters
+    """
 
     if output_path_full is None:
         output_path_full = os.getcwd()
@@ -112,36 +138,32 @@ def optimal_num_clustas(
         "max_iter": 300,
         "random_state": 42,
     }
-    # A list holds the SSE values for each k
-    sse = []
+
+    sse = [] # A list holds the SSE values for each k
     for k in range(1, top_end):
         kmeans = KMeans(n_clusters=k, **kmeans_kwargs)
         kmeans.fit(scaled_features)
         sse.append(kmeans.inertia_)
 
-    # plot to illustrate (viewing it is optional)
-    title_k = "Optimal k-means for" + d_title
     kmeans_opt_df = pd.DataFrame(
         list(zip(range(1, top_end), sse)), columns=["Number of Clusters", "SSE"]
     )
-    f_k = px.line(kmeans_opt_df, x="Number of Clusters", y="SSE", title=title_k)
-    # find optimum
-    kl = KneeLocator(range(1, top_end), sse, curve="convex", direction="decreasing")
+    title_k = f"Elbow Method for Optimal k - {d_title}"
+    f_k = px.line(kmeans_opt_df, x="Number of Clusters", y="SSE", title=title_k,
+                  template="presentation", height=600, width=800)
+
+    kl = KneeLocator(range(1, top_end), sse, curve="convex", direction="decreasing") # find the optimal k
     onk = kl.elbow
 
     if onk is None:
-        print("Warning - {} has no solution for optimal k-means".format(d_title))
-        print("Returning # of clusters as max allowed ( {} )".format(top_end))
+        warnings.warn("No elbow found - Returning # of clusters as max allowed ( {} )".format(top_end))
         return top_end
 
-    if onk == top_end:
-        print(
-            "Warning - {} opt. # equals max value searched ({})".format(
-                d_title, top_end
-            )
-        )
+    elif onk == top_end:
+        warnings.warn("Elbow found at max allowed # of clusters ( {} ) - consider increasing top_end and re-running".format(top_end))
 
-    print("\nFor {}: opt. # of k-means clusters is {} \n".format(d_title, onk))
+    if verbose:
+        print("Optimal number of clusters is {}".format(onk))
     f_k.add_vline(x=onk)  # add vertical line to plotly
 
     if show_plot:
@@ -281,7 +303,7 @@ def viz_job_data_word2vec(
     if len(viz_df["avg_vec"]) < max_clusters:
         max_clusters = len(viz_df["avg_vec"])
 
-    kmeans_numC = optimal_num_clustas(
+    kmeans_numC = find_optimal_k(
         viz_df["avg_vec"], d_title="word2vec-" + query_name, top_end=max_clusters
     )
 
@@ -402,7 +424,7 @@ def vizjobs_googleUSE(
     if len(viz_df["use_vec"]) < max_clusters:
         max_clusters = len(viz_df["use_vec"])
 
-    kmeans_numC = optimal_num_clustas(
+    kmeans_numC = find_optimal_k(
         viz_df["use_vec"], d_title="google_USE-" + query_name, top_end=max_clusters
     )
 
