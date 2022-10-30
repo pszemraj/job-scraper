@@ -3,10 +3,12 @@ import pprint as pp
 import random
 import time
 import urllib
+import logging
 import warnings
 from datetime import date, datetime
 from os.path import join
 
+logging.basicConfig(filename="scrape_and_viz.log", level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
 import gensim.downloader as api
 import numpy as np
 import pandas as pd
@@ -35,9 +37,9 @@ def save_jobs_to_excel(jobs_list:list, file_path:str, verbose=False):
     """
     df = pd.DataFrame(jobs_list)
     df.to_excel(file_path)
+    logging.info("saved the following to excel with filename {}: \n".format(file_path))
 
     if verbose:
-        print("saved the following to excel with filename {}: \n".format(file_path))
 
         print(df.info())
     return df
@@ -66,7 +68,7 @@ def shorten_URL_bitly(long_url:str,  ACCESS_TOKEN:str="", max_sleep_time:int=5, 
         short_url = s.bitly.short(long_url)
 
         if verbose:
-            print("Short URL is {}".format(short_url))
+            logging.info("Short URL is {}".format(short_url))
     except Exception as e:
         print("Error: {}".format(e))
         short_url = long_url
@@ -115,7 +117,7 @@ def find_optimal_k(
     Returns:
         int: optimal number of clusters
     """
-
+    logging.info(f"finding optimal k for {d_title}")
     if output_path_full is None:
         output_path_full = os.getcwd()
     scaler = StandardScaler()
@@ -125,6 +127,7 @@ def find_optimal_k(
 
     if isinstance(input_matrix, pd.DataFrame):
         # fixes weird issues parsing a texthero edited text pd series
+        logging.info("input matrix is a pd dataframe")
         input_matrix_coo = input_matrix.sparse.to_coo()
         input_matrix_for_vectorization = input_matrix_coo.astype("float64")
     else:
@@ -137,6 +140,14 @@ def find_optimal_k(
         "max_iter": 300,
         "random_state": 42,
     }
+    logging.info(f"finding optimal k with params: {kmeans_kwargs}")
+    # A list holds the SSE values for each k
+    sse = []
+    for k in range(1, top_end):
+        kmeans = KMeans(n_clusters=k, **kmeans_kwargs)
+        kmeans.fit(scaled_features)
+        sse.append(kmeans.inertia_)
+
 
     sse = [] # A list holds the SSE values for each k
     for k in range(1, top_end):
@@ -160,7 +171,7 @@ def find_optimal_k(
 
     elif onk == top_end:
         warnings.warn("Elbow found at max allowed # of clusters ( {} ) - consider increasing top_end and re-running".format(top_end))
-
+    logging.info(f"optimal k is {onk}")
     if verbose:
         print("Optimal number of clusters is {}".format(onk))
     f_k.add_vline(x=onk)  # add vertical line to plotly
@@ -225,29 +236,31 @@ def viz_job_data(viz_df:pd.DataFrame, text_col_name:str, save_plot=False, h:int=
 
     if save_plot:
         fig_s.write_html(plot_title + ".html", include_plotlyjs=True)
+        logging.info("saved plotly figure to {}".format(plot_title + ".html"))
 
-    if verbose:
-        print("plot generated - ", datetime.now())
+    logging.info("plotting complete" + plot_title)
 
 
-def load_gensim_word2vec(word2vec_model:str="word2vec-google-news-300", verbose=False):
-    # another option is the smaller: api.load("word2vec-ruscorpora-300")
+def load_gensim_word2vec(word2vec_model:str="'glove-wiki-gigaword-300", verbose=False):
+
+    logging.info("loading gensim word2vec model {}".format(word2vec_model))
     loaded_model = api.load(word2vec_model)
 
-    print("loaded data for word2vec - ", datetime.now())
+    logging.info("loaded data for word2vec - ", datetime.now())
 
     if verbose:
         # for more info or bug fixing
         wrdvecs = pd.DataFrame(loaded_model.vectors, index=loaded_model.key_to_index)
-        print("created dataframe from word2vec data- ", datetime.now())
-        print("dimensions of the df: \n", wrdvecs.shape)
+        logging.info("created dataframe from word2vec data- ", datetime.now())
+        logging.info("dimensions of the df: \n", wrdvecs.shape)
 
-    print("testing gensim model...")
-    test_string = "computer"
-    vector = loaded_model.wv[test_string]
+    if verbose:
+        print("testing gensim model...")
+        test_string = "computer"
+        vector = loaded_model.wv[test_string]
 
-    print("The shape of string {} is: \n {}".format(test_string, vector.shape))
-    print("test complete - ", datetime.now())
+        print("The shape of string {} is: \n {}".format(test_string, vector.shape))
+        print("test complete - ", datetime.now())
 
     return loaded_model
 
@@ -279,12 +292,12 @@ def get_vector_freetext(input_text, model, verbose=0, cutoff=2):
             num_excluded += 1
             if verbose == 2:
                 print("\nThe word/term {} is not in the model vocab.".format(word))
-                print("Excluding from representative vector")
+                logging.info("Excluding from representative vector")
 
     rep_vec = np.mean(list_of_vectors, axis=0)
 
     if verbose > 0:
-        print(
+        logging.info(
             "Computed representative vector. Excluded {} words out of {}".format(
                 num_excluded, num_words_total
             )
@@ -297,10 +310,8 @@ def viz_job_data_word2vec(
     viz_df, text_col_name, save_plot=False, h=720, query_name="", show_text=False
 ):
     today = date.today()
-    # Month abbreviation, day and year
-    td_str = today.strftime("%b-%d-%Y")
+    td_str = today.strftime("%b-%d-%Y") # date string
 
-    # compute word2vec avg vector for each row of text
     viz_df["avg_vec"] = viz_df[text_col_name].apply(
         get_vector_freetext, args=(w2v_model,)
     )
@@ -395,14 +406,14 @@ def viz_job_data_word2vec(
             include_plotlyjs=True,
         )
 
-    print("plot generated - ", datetime.now())
+    logging.info("plot generated - ", datetime.now())
 
 
 def load_google_USE():
     st = time.time()
     embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
     rt = (time.time() - st) / 60
-    print("loaded google USE embeddings in {} minutes".format(round(rt, 2)))
+    logging.info("loaded google USE embeddings in {} minutes".format(round(rt, 2)))
 
     return embed
 
@@ -544,7 +555,7 @@ def vizjobs_googleUSE(
             include_plotlyjs=True,
         )
 
-    print("plot generated - ", datetime.now())
+    logging.info("plot generated - ", datetime.now())
 
 
 def find_CHjobs_from(
@@ -581,7 +592,7 @@ def find_CHjobs_from(
 
     job_df = save_jobs_to_excel(jobs_list, filename)
 
-    print(
+    logging.info(
         "{} new job postings retrieved from {}. Stored in {}.".format(
             num_listings, website, filename
         )
@@ -647,7 +658,7 @@ def extract_job_information_indeedCH(
 
     with open("job_elements.txt", "w") as f:
         # save to text file for investigation
-        print(job_elems, file=f)
+        logging.info(job_elems, file=f)
 
     cols = []
     extracted_info = []
@@ -700,7 +711,7 @@ def extract_job_information_indeedCH(
 def extract_job_title_indeed(job_elem, verbose=False):
     title_elem = job_elem.select_one("span[title]").text
     if verbose:
-        print(title_elem)
+        logging.info(title_elem)
     try:
         title = title_elem.strip()
     except:
@@ -740,7 +751,7 @@ def extract_summary_indeed(job_elem):
 def indeed_postprocess(
     i_df, query_term, query_jobtype, verbose=False, shorten_links=False
 ):
-    print("Starting postprocess - ", datetime.now())
+    logging.info("Starting postprocess - ", datetime.now())
 
     # apply texthero cleaning
     i_df["titles"] = hero.clean(i_df["titles"])
@@ -750,9 +761,9 @@ def indeed_postprocess(
     if shorten_links:
         try:
             len(i_df["short_link"])
-            print("found values for short_link, not-recreating")
+            logging.info("found values for short_link, not-recreating")
         except:
-            print("no values exist for short_link, creating them now")
+            logging.info("no values exist for short_link, creating them now")
             # there is a random delay to not overload APIs, max rt is 5s * num_rows
             i_df["short_link"] = i_df["links"].apply(shorten_URL_bitly)
     else:
@@ -775,7 +786,7 @@ def indeed_postprocess(
     )
     i_df.to_excel(out_name)
     if verbose:
-        print("Saved {} - ".format(out_name), datetime.now())
+        logging.info("Saved {} - ".format(out_name), datetime.now())
 
     # download if requested
     return i_df
@@ -785,7 +796,7 @@ def indeed_datatable(i_df, count_what="companies", freq_n=10):
     # basically just wrote this to reduce code down below
     # depends on the colab data_table.DataTable()
 
-    print("Count of column '{}' appearances in search:\n".format(count_what))
+    logging.info("Count of column '{}' appearances in search:\n".format(count_what))
     comp_list_1 = i_df[count_what].value_counts()
     pp.pprint(comp_list_1.head(freq_n), compact=True)
 
