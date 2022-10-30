@@ -1,3 +1,45 @@
+# system / workspace
+
+# IDE
+*vscode*
+*vscode/
+*.idea
+
+# logs
+*.log
+*LOGFILE*
+
+# data dir should be force-added
+*data/
+
+# output files need to be force-added
+*.csv
+*.png
+*.pkl
+*.xlsx
+
+# scratch files and folders
+
+*scratch*
+*scratch/
+
+# notebooks
+
+*notebooks/
+*.ipynb
+
+# cache
+*cache/
+
+# reports folder - need to be force-added
+*reports/
+
+# model files
+
+*models/
+
+# --- BEGIN STANDARD PYTHON GITIGNORE ---
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
