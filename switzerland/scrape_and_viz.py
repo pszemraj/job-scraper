@@ -190,16 +190,21 @@ def viz_job_data(viz_df:pd.DataFrame, text_col_name:str, save_plot=False, h:int=
     viz_job_data takes a dataframe and returns a plotly figure of the top 10 most common words
 
     Args:
-        viz_df (pd.DataFrame): _description_
-        text_col_name (str): _description_
-        save_plot (bool, optional): _description_. Defaults to False.
-        h (int, optional): _description_. Defaults to 720.
-        verbose (bool, optional): _description_. Defaults to False.
+        viz_df (pd.DataFrame): dataframe to visualize
+        text_col_name (str): name of the column to visualize (must be a string)
+        save_plot (bool, optional): save plot to image. Defaults to False.
+        h (int, optional): height of plot. Defaults to 720. The width is scaled based on the height.
+        verbose (bool, optional):  Defaults to False.
+
+    Returns:
+        None
     """
     today = date.today()
     # Month abbreviation, day and year
     td_str = today.strftime("%b-%d-%Y")
 
+    if verbose:
+        print("running viz_job_data")
     viz_df["tfidf"] = viz_df[text_col_name].pipe(hero.clean).pipe(hero.tfidf)
 
     viz_df["kmeans"] = viz_df["tfidf"].pipe(hero.kmeans, n_clusters=5).astype(str)
@@ -265,16 +270,20 @@ def load_gensim_word2vec(word2vec_model:str="'glove-wiki-gigaword-300", verbose=
     return loaded_model
 
 
-# iterate through all words in the input text generate the word2vec vector for that word, then take the mean of
-# those. Only words with length 3 or greater are considered. **note that if a word is not in the google news dataset,
-# it is just skipped. If you think the graphs / representations are not good enough, you should check to ensure that
-# a large amount of words (or fraction rather) are not being skipped)** * the verbose parameter helps with that
 
+def get_vector_freetext(input_text: str, model, verbose:int=0, cutoff:int=2):
+    """
+    get_vector_freetext takes a string and returns a vector of the average word2vec vector for each word in the string
 
-def get_vector_freetext(input_text, model, verbose=0, cutoff=2):
-    # verbose = 1 shows you how many words were skipped
-    # verbose = 2 tells you each individual skipped word and ^
-    # 'cutoff' removes all words with length N or less from the rep. vector
+    Args:
+        input_text (str): string to convert to vector
+        model (gensim model): gensim model to use
+        verbose (int, optional): Defaults to 0. 0 = no output, 1 shows you how many words were skipped, 2 tells you each individual skipped word and ^
+        cutoff (int, optional): Defaults to 2. minimum word length to consider
+
+    Returns:
+        np.array: vector of the average word2vec vector for each word in the string
+    """
 
     lower_it = input_text.lower()
     input_words = lower_it.split(" ")  # yes, this is an assumption
@@ -307,8 +316,20 @@ def get_vector_freetext(input_text, model, verbose=0, cutoff=2):
 
 
 def viz_job_data_word2vec(
-    viz_df, text_col_name, save_plot=False, h=720, query_name="", show_text=False
+    viz_df: pd.DataFrame, text_col_name: str, save_plot=False, h: int=720, query_name: str="", show_text=False, max_clusters:int = 15
 ):
+    """
+    viz_job_data_word2vec takes a dataframe and returns a plotly figure of the top 10 most common words
+
+    Args:
+        viz_df (pd.DataFrame): dataframe to visualize
+        text_col_name (str): name of the column to visualize (must be a string)
+        save_plot (bool, optional): save plot to image. Defaults to False.
+        h (int, optional): height of plot. Defaults to 720. The width is scaled based on the height.
+        query_name (str, optional): name of the original query (to use in the title). Defaults to "".
+        show_text (bool, optional): plot text in the plot. Defaults to False.
+        max_clusters (int, optional): maximum number of clusters to use. Defaults to 15 for interpretability.
+    """
     today = date.today()
     td_str = today.strftime("%b-%d-%Y") # date string
 
@@ -316,8 +337,6 @@ def viz_job_data_word2vec(
         get_vector_freetext, args=(w2v_model,)
     )
 
-    # get optimal number of kmeans. limit max to 15 for interpretability
-    max_clusters = 15
     if len(viz_df["avg_vec"]) < max_clusters:
         max_clusters = len(viz_df["avg_vec"])
 
@@ -340,26 +359,18 @@ def viz_job_data_word2vec(
         )
         .astype(str)
     )
-    # texthero has other algs to reduce dimensions besides pca, see docs
     viz_df["pca"] = viz_df["avg_vec"].pipe(hero.pca)
 
     # generate list of column names for hover_data
-    hv_list = list(viz_df.columns)
-    hv_list.remove("avg_vec")
-    hv_list.remove("pca")
-    if "tfidf" in hv_list:
-        hv_list.remove("tfidf")
-    if "summary" in hv_list:
-        hv_list.remove("summary")
+    hv_list = [col for col in viz_df.columns if col not in ["avg_vec", "pca", "tfidf", "summary"]]
 
     # reformat data so don't have to use texthero built-in plotting
     df_split_pca = pd.DataFrame(viz_df["pca"].to_list(), columns=["pca_x", "pca_y"])
-    viz_df.drop(columns="pca", inplace=True)  # drop original PCA column
-    viz_df = pd.concat([viz_df, df_split_pca], axis=1)  # merge dataframes
+    viz_df.drop(columns="pca", inplace=True)
+    viz_df = pd.concat([viz_df, df_split_pca], axis=1)  # merge
 
-    # set up plot pars (width, title, text)
     w = int(h * (4 / 3))
-
+    labels = {"pca_x": "PCA X", "pca_y": "PCA Y", "kmeans": "KMeans Cluster"}
     if len(query_name) > 0:
         # user provided query_name so include
         plot_title = (
@@ -388,6 +399,7 @@ def viz_job_data_word2vec(
         color="kmeans",
         hover_data=hv_list,
         title=plot_title,
+        labels=labels,
         height=h,
         width=w,
         template="plotly_dark",
@@ -395,26 +407,34 @@ def viz_job_data_word2vec(
     )
     fig_w2v.show()
 
-    # save if requested
-
     if save_plot:
         # saves the HTML file
         # auto-saving as a static image is a lil difficult so just click on the interactive
         # plot it generates
-        fig_w2v.write_html(
-            plot_title + query_name + "_" + text_col_name + ".html",
+        _title = plot_title + query_name + "_" + text_col_name + ".html"
+        logging.info("Saving plot as {}".format(_title))
+        fig_w2v.write_html(_title,
             include_plotlyjs=True,
         )
 
     logging.info("plot generated - ", datetime.now())
 
 
-def load_google_USE():
-    st = time.time()
-    embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
-    rt = (time.time() - st) / 60
-    logging.info("loaded google USE embeddings in {} minutes".format(round(rt, 2)))
+def load_google_USE(url: str="https://tfhub.dev/google/universal-sentence-encoder/4"):
+    """
+    load_google_USE loads the google USE model from the URL
 
+    Args:
+        url (str): URL to the model, defaults to "https://tfhub.dev/google/universal-sentence-encoder/4"
+
+    Returns:
+        [type]: [description]
+    """
+    """helper function to load the google USE model"""
+    st = time.perf_counter()
+    embed = hub.load(url)
+    rt = round((time.perf_counter() - st) / 60, 2)
+    logging.info("Loaded Google USE in {} minutes".format(rt))
     return embed
 
 
@@ -565,8 +585,29 @@ def find_CHjobs_from(
     job_type=None,
     language=None,
     verbose=False,
-    filename=date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls",
+    filename:str=None,
 ):
+    """
+
+    This function extracts all the desired characteristics of all new job postings
+        of the title and location specified and returns them in single file.
+
+    Parameters
+    ----------
+
+        - Website: to specify which website to search
+            - (options: 'indeed' or 'indeed_default')
+        - job_query: words that you want to narrow down the jobs to.
+            - for example 'data'
+        - job_type:
+            - 'internship' or 'fulltime' or 'permanent'
+        - language:
+            - 'en' or 'de' or other languages.. 'fr'? ew
+        - desired_characs: what columns of data do you want to extract? options are:
+            - 'titles', 'companies', 'links', 'date_listed', 'summary'
+        - Filename: name of the file to save the data to. If None, then it will default to date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
+
+    """
 
     assert website in ["indeed", "indeed_default"], "website not supported - use 'indeed' or 'indeed_default'"
     assert job_type in ["internship", "fulltime", "permanent", None], "job_type not supported - use 'internship', 'fulltime', or 'permanent'"
@@ -607,7 +648,7 @@ def find_CHjobs_from(
     return job_df
 
 
-def load_indeed_jobs_CH(job_query, job_type=None, language=None, run_default=False):
+def load_indeed_jobs_CH(job_query, job_type=None, language:str=None, run_default=False):
     i_website = "https://ch.indeed.com/Stellen?"
     def_website = "https://ch.indeed.com/Stellen?q=Switzerland+English&jt=internship"
     if run_default:
@@ -743,6 +784,15 @@ def extract_link_indeedCH(job_elem, uURL):
 
 
 def extract_date_indeed(job_elem):
+    """
+    extract_date_indeed extracts the date the job was posted
+
+    Args:
+        job_elem (bs4.element.Tag): bs4 element containing the job information
+
+    Returns:
+        date (str): date the job was posted
+    """
     date_elem = job_elem.find("span", class_="date")
     date = date_elem.text.strip()
     return date
@@ -843,28 +893,7 @@ if __name__ == "__main__":
     if using_gensim_w2v:
         w2v_model = load_gensim_word2vec()
 
-    """## Swiss Jobs - Indeed
 
-    ```
-    This function extracts all the desired characteristics of all new job postings
-        of the title and location specified and returns them in single file.
-    The arguments it takes are:
-
-        - Website: to specify which website to search
-            - (options: 'indeed' or 'indeed_default')
-        - job_query: words that you want to narrow down the jobs to.
-            - for example 'data'
-        - job_type:
-            - 'internship' or 'fulltime' or 'permanent'
-        - language:
-            - 'en' or 'de' or other languages.. 'fr'? ew
-        - Desired_characs: what columns of data do you want to extract? options are:
-            - 'titles', 'companies', 'links', 'date_listed', 'summary'
-        - Filename: default is "JS_test_results.xls", can be changed to whatever
-    ```
-
-    ### query 1 - internship in "data"
-    """
 
     jq1 = "data"  # @param {type:"string"}
     jt1 = "internship"  # @param {type:"string"}
