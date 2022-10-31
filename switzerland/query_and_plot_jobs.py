@@ -518,7 +518,7 @@ def vizjobs_googleUSE(
     logging.info("plot generated - ", datetime.now())
 
 
-def find_CHjobs_from(
+def query_CH_jobs(
     website: str,
     desired_characs,
     job_query: str,
@@ -569,7 +569,7 @@ def find_CHjobs_from(
         or date.today().strftime("%b-%d-%Y") + "_[raw]_scraped_jobs_CH.xls"
     )
     if website == "indeed":
-        sp_search = load_indeed_jobs_CH(job_query, job_type=job_type, language=language)
+        sp_search = load_jobs_CH(job_query, job_type=job_type, language=language)
         job_soup = sp_search.get("job_soup")
         URL_used = sp_search.get("query_URL")
 
@@ -580,7 +580,7 @@ def find_CHjobs_from(
             job_soup, desired_characs, uURL=URL_used
         )
     elif website == "indeed_default":
-        sp_search = load_indeed_jobs_CH(job_query, run_default=True)
+        sp_search = load_jobs_CH(job_query, run_default=True)
         job_soup = sp_search.get("job_soup")
         URL_used = sp_search.get("query_URL")
         if verbose:
@@ -602,7 +602,7 @@ def find_CHjobs_from(
     return job_df
 
 
-def load_indeed_jobs_CH(
+def load_jobs_CH(
     job_query: str,
     job_type: str = None,
     language: str = None,
@@ -693,35 +693,35 @@ def extract_job_information_indeedCH(
         titles = []
         cols.append("titles")
         for job_elem in job_elems:
-            titles.append(extract_job_title_indeed(job_elem, verbose=verbose))
+            titles.append(extract_job_title(job_elem, verbose=verbose))
         extracted_info.append(titles)
 
     if "companies" in desired_characs:
         companies = []
         cols.append("companies")
         for job_elem in job_elems:
-            companies.append(extract_company_indeed(job_elem))
+            companies.append(extract_company(job_elem))
         extracted_info.append(companies)
 
     if "date_listed" in desired_characs:
         dates = []
         cols.append("date_listed")
         for job_elem in job_elems:
-            dates.append(extract_date_indeed(job_elem))
+            dates.append(extract_date(job_elem))
         extracted_info.append(dates)
 
     if "summary" in desired_characs:
         summaries = []
         cols.append("summary")
         for job_elem in job_elems:
-            summaries.append(extract_summary_indeed(job_elem))
+            summaries.append(extract_summary(job_elem))
         extracted_info.append(summaries)
 
     if "links" in desired_characs:
         links = []
         cols.append("links")
         for job_elem in job_elems:
-            links.append(extract_link_indeedCH(job_elem, uURL))
+            links.append(extract_link(job_elem, uURL))
         extracted_info.append(links)
 
     jobs_list = {}
@@ -734,7 +734,7 @@ def extract_job_information_indeedCH(
     return jobs_list, num_listings
 
 
-def extract_job_title_indeed(
+def extract_job_title(
     job_elem, target_html: str = "span", target_class: str = "title", verbose=False
 ):
     """
@@ -757,7 +757,7 @@ def extract_job_title_indeed(
     return title
 
 
-def extract_company_indeed(
+def extract_company(
     job_elem,
     target_html: str = "span",
     target_class: str = "companyName",
@@ -776,7 +776,7 @@ def extract_company_indeed(
     return company
 
 
-def extract_link_indeedCH(job_elem, uURL):
+def extract_link(job_elem, uURL):
     """
     extract_link_indeedCH - extracts the link to the job posting from the indeed job element
             some manual shenanigans occur here
@@ -796,7 +796,7 @@ def extract_link_indeedCH(job_elem, uURL):
     return link.replace("/rc/clk?jk=", "vjk=")
 
 
-def extract_date_indeed(job_elem, target_html: str = "span", target_class: str = "date", verbose=False):
+def extract_date(job_elem, target_html: str = "span", target_class: str = "date", verbose=False):
     """
     extract_date_indeed extracts the date the job was posted
 
@@ -813,7 +813,7 @@ def extract_date_indeed(job_elem, target_html: str = "span", target_class: str =
     return date
 
 
-def extract_summary_indeed(job_elem, target_html: str = "div", target_class: str = "job-snippet", verbose=False):
+def extract_summary(job_elem, target_html: str = "div", target_class: str = "job-snippet", verbose=False):
     """
     extract_summary_indeed extracts the summary of the job posting
 
@@ -866,7 +866,7 @@ if __name__ == "__main__":
 
     # variables for fn defined in form above
 
-    chdf1 = find_CHjobs_from(
+    chdf1 = query_CH_jobs(
         website="indeed",
         desired_characs=desired_characs,
         job_query=jq1,
@@ -932,7 +932,7 @@ if __name__ == "__main__":
     jq2 = "indeed_default"  # passing this phrase in causes it to search for all en jobs
     jt2 = "all"
     # in the case of "run the special case on Indeed" query terms don't matter
-    chdf2 = find_CHjobs_from(
+    chdf2 = query_CH_jobs(
         website="indeed_default", job_query="gimme", desired_characs=desired_characs
     )
 
