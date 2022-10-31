@@ -1,9 +1,10 @@
+import logging
 import os
 import pprint as pp
 import random
+import sys
 import time
 import urllib
-import logging
 import warnings
 from datetime import date, datetime
 from os.path import join
@@ -19,12 +20,35 @@ import pandas as pd
 import plotly.express as px
 import pyshorteners
 import requests
-import tensorflow_hub as hub
+
+with warnings.catch_warnings():
+
+    warnings.simplefilter("ignore")
+    # set stdout to None to suppress output
+    with open(os.devnull, "w") as devnull:
+
+        old_stdout = sys.stdout
+        sys.stdout = devnull
+        old_stderr = sys.stderr
+        sys.stderr = devnull
+        old_logging = logging.getLogger().handlers
+        logging.getLogger().handlers = []
+        # load the model
+        import tensorflow_hub as hub
+        import tensorflow as tf
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+        logging.getLogger().handlers = old_logging
+
+
+    logging.info("imported tensorflow and tensorflow_hub")
 import texthero as hero
 from bs4 import BeautifulSoup
 from kneed import KneeLocator
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+
+from scrape_jobs import get_scraper
 
 
 def save_jobs_to_excel(jobs_list: list, file_path: str, verbose=False):
@@ -717,7 +741,8 @@ def find_CHjobs_from(
 
 
 def load_indeed_jobs_CH(
-    job_query: str, job_type: str = None, language: str = None, run_default=False
+    job_query: str, job_type: str = None, language: str = None, run_default=False,
+    scraper_template="generic",
 ):
     """
     load_indeed_jobs_CH is a function that loads the indeed job search page for Switzerland
@@ -727,23 +752,30 @@ def load_indeed_jobs_CH(
         job_type (str, optional):   'internship' or 'fulltime' or 'permanent'
         language (str, optional):   'en' or 'de' or other languages.. 'fr'? ew
         run_default (bool, optional):  if True, then it will run the default search
+        scraper_template (bool, optional):  if True, then it will run the basic scraper, which is just requests.get(URL)
 
     Returns:
         dict: dictionary containing the job_soup and the query_URL
     """
     i_website = "https://ch.indeed.com/Stellen?"
     def_website = "https://ch.indeed.com/Stellen?q=Switzerland+English&jt=internship"
+    logging.info(f"loading indeed jobs for {job_query} in {language}... using {scraper_template} scraper")
+    scraper = get_scraper(template=scraper_template)
     if run_default:
         # switzerland has a unique page shown below, can run by default
         # website = "https://ch.indeed.com/Switzerland-English-Jobs"
+        logging.info("running default search")
 
         getVars = {"fromage": "last", "limit": "50", "sort": "date"}
 
         url = def_website + urllib.parse.urlencode(getVars)
-        page = requests.get(url)
+        page = scraper.get(url)
+        logging.info(f"found the following content: {page.content}")
+
         soup = BeautifulSoup(page.content, "html.parser")
         job_soup = soup.find(id="resultsCol")
     else:
+        logging.info("running custom search")
         getVars = {
             "q": job_query,
             "jt": job_type,
@@ -752,7 +784,6 @@ def load_indeed_jobs_CH(
             "limit": "50",
             "sort": "date",
         }
-
         # if values are not specified, then remove them from the dict (and URL)
         if job_query is None:
             del getVars["q"]
@@ -762,7 +793,9 @@ def load_indeed_jobs_CH(
             del getVars["lang"]
 
         url = i_website + urllib.parse.urlencode(getVars)
-        page = requests.get(url)
+        logging.info(f"using the following URL: {url}")
+        page = scraper.get(url)
+        logging.info(f"found the following content: {page.content}")
         soup = BeautifulSoup(page.content, "html.parser")
         job_soup = soup.find(id="resultsCol")
 
