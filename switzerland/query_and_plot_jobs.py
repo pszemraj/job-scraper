@@ -22,8 +22,14 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 from scrape_jobs import get_scraper
-from utils import (indeed_datatable, indeed_postprocess, load_gensim_word2vec,
-                   load_google_USE, save_jobs_to_excel, text_first_N)
+from utils import (
+    indeed_datatable,
+    indeed_postprocess,
+    load_gensim_word2vec,
+    load_google_USE,
+    save_jobs_to_excel,
+    text_first_N,
+)
 
 
 def find_optimal_k(
@@ -201,7 +207,6 @@ def viz_job_data(
     logging.info("plotting complete" + plot_title)
 
 
-
 def get_vector_freetext(input_text: str, model, verbose: int = 0, cutoff: int = 2):
     """
     get_vector_freetext takes a string and returns a vector of the average word2vec vector for each word in the string
@@ -359,8 +364,6 @@ def viz_job_data_word2vec(
         )
 
     logging.info("plot generated - ", datetime.now())
-
-
 
 
 def vizjobs_googleUSE(
@@ -731,7 +734,9 @@ def extract_job_information_indeedCH(
     return jobs_list, num_listings
 
 
-def extract_job_title_indeed(job_elem, verbose=False):
+def extract_job_title_indeed(
+    job_elem, target_html: str = "span", target_class: str = "title", verbose=False
+):
     """
     extract_job_title_indeed - extracts the job title from the indeed job element
 
@@ -742,7 +747,7 @@ def extract_job_title_indeed(job_elem, verbose=False):
     Returns:
         str: the extracted job title
     """
-    title_elem = job_elem.select_one("span[title]").text
+    title_elem = job_elem.select_one(f"{target_html}[{target_class}]").text
     if verbose:
         logging.info(title_elem)
     try:
@@ -752,7 +757,11 @@ def extract_job_title_indeed(job_elem, verbose=False):
     return title
 
 
-def extract_company_indeed(job_elem):
+def extract_company_indeed(
+    job_elem,
+    target_html: str = "span",
+    target_class: str = "companyName",
+):
     """
     extract_company_indeed - extracts the company name from the indeed job element
 
@@ -762,7 +771,7 @@ def extract_company_indeed(job_elem):
     Returns:
         str: the extracted company name
     """
-    company_elem = job_elem.find("span", class_="companyName")
+    company_elem = job_elem.find(target_html, class_=target_class)
     company = company_elem.text.strip()
     return company
 
@@ -787,7 +796,7 @@ def extract_link_indeedCH(job_elem, uURL):
     return link.replace("/rc/clk?jk=", "vjk=")
 
 
-def extract_date_indeed(job_elem):
+def extract_date_indeed(job_elem, target_html: str = "span", target_class: str = "date", verbose=False):
     """
     extract_date_indeed extracts the date the job was posted
 
@@ -797,12 +806,14 @@ def extract_date_indeed(job_elem):
     Returns:
         date (str): date the job was posted
     """
-    date_elem = job_elem.find("span", class_="date")
+    date_elem = job_elem.find(target_html, class_=target_class)
     date = date_elem.text.strip()
+    if verbose:
+        logging.info(date)
     return date
 
 
-def extract_summary_indeed(job_elem):
+def extract_summary_indeed(job_elem, target_html: str = "div", target_class: str = "job-snippet", verbose=False):
     """
     extract_summary_indeed extracts the summary of the job posting
 
@@ -812,11 +823,11 @@ def extract_summary_indeed(job_elem):
     Returns:
         summary (str): summary of the job posting
     """
-    summary_elem = job_elem.find("div", class_="job-snippet")
+    summary_elem = job_elem.find(target_html, class_=target_class)
     summary = summary_elem.text.strip()
+    if verbose:
+        logging.info(summary)
     return summary
-
-
 
 
 # define whether or not to shorten links
