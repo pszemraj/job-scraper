@@ -26,6 +26,16 @@ result, it's easier to find similar jobs by title or description.
 
 <!-- /TOC -->
 ---
+## install
+
+Texthero has special requirements as it is not maintained anymore. It is recommended to install it via pip using special arguments:
+
+```bash
+pip install -r requirements.txt
+# helper for texthero
+bash install_texthero.sh
+```
+
 
 ## Updates w.r.t. Original
 
