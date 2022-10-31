@@ -7,8 +7,6 @@ import warnings
 from datetime import date, datetime
 from os.path import join
 
-from switzerland.utils import indeed_datatable, indeed_postprocess, load_gensim_word2vec, load_google_USE, save_jobs_to_excel, text_first_N
-
 logging.basicConfig(
     filename="scrape_and_viz.log",
     level=logging.INFO,
@@ -17,8 +15,6 @@ logging.basicConfig(
 import numpy as np
 import pandas as pd
 import plotly.express as px
-
-
 import texthero as hero
 from bs4 import BeautifulSoup
 from kneed import KneeLocator
@@ -26,7 +22,8 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 from scrape_jobs import get_scraper
-
+from utils import (indeed_datatable, indeed_postprocess, load_gensim_word2vec,
+                   load_google_USE, save_jobs_to_excel, text_first_N)
 
 
 def find_optimal_k(
