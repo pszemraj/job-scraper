@@ -41,10 +41,10 @@ def get_scraper(
             delay=random.SystemRandom().randint(5, 13),
             # interpreter="nodejs" if check_if_nodeJS_is_installed() else "native",
             browser={
-                    "browser": "chrome",
-                    "platform": "windows",
-                    "mobile": False,
-                }
+                "browser": "chrome",
+                "platform": "windows",
+                "mobile": False,
+            },
         )
         return scraper
 

@@ -36,10 +36,10 @@ with warnings.catch_warnings():
         # load the model
         import tensorflow_hub as hub
         import tensorflow as tf
+
         sys.stdout = old_stdout
         sys.stderr = old_stderr
         logging.getLogger().handlers = old_logging
-
 
     logging.info("imported tensorflow and tensorflow_hub")
 import texthero as hero
@@ -741,7 +741,10 @@ def find_CHjobs_from(
 
 
 def load_indeed_jobs_CH(
-    job_query: str, job_type: str = None, language: str = None, run_default=False,
+    job_query: str,
+    job_type: str = None,
+    language: str = None,
+    run_default=False,
     scraper_template="generic",
 ):
     """
@@ -759,7 +762,9 @@ def load_indeed_jobs_CH(
     """
     i_website = "https://ch.indeed.com/Stellen?"
     def_website = "https://ch.indeed.com/Stellen?q=Switzerland+English&jt=internship"
-    logging.info(f"loading indeed jobs for {job_query} in {language}... using {scraper_template} scraper")
+    logging.info(
+        f"loading indeed jobs for {job_query} in {language}... using {scraper_template} scraper"
+    )
     scraper = get_scraper(template=scraper_template)
     if run_default:
         # switzerland has a unique page shown below, can run by default
