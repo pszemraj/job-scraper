@@ -21,7 +21,14 @@ from kneed import KneeLocator
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-from scrape_jobs import get_scraper
+from scrape_jobs import (
+    get_scraper,
+    extract_company,
+    extract_date,
+    extract_job_title,
+    extract_link,
+    extract_summary,
+)
 from utils import (
     indeed_datatable,
     indeed_postprocess,
@@ -673,6 +680,19 @@ def load_jobs_CH(
 def extract_job_information_indeedCH(
     job_soup, desired_characs, uURL=None, verbose=False, print_all=False
 ):
+    """
+    extract_job_information_indeedCH is a function that extracts the job information from the indeed job search page for Switzerland
+
+    Args:
+        job_soup (BeautifulSoup): the job soup to extract the information from
+        desired_characs (list): list of desired characteristics to extract
+        uURL (  str, optional): the URL used to extract the information
+        verbose (bool, optional):  Defaults to False.
+        print_all (bool, optional):  Defaults to False.
+
+    Returns:
+        _type_: _description_
+    """
     uURL = uURL or "https://ch.indeed.com/Stellen?" + "ADD_queries_here"
     # job_elems = job_soup.find_all('div', class_='mosaic-zone-jobcards')
     job_elems = job_soup.find_all("div", class_="job_seen_beacon")
@@ -732,9 +752,6 @@ def extract_job_information_indeedCH(
     num_listings = len(extracted_info[0])
 
     return jobs_list, num_listings
-
-
-
 
 
 if __name__ == "__main__":
