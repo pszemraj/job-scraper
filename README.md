@@ -26,16 +26,34 @@ result, it's easier to find similar jobs by title or description.
 
 <!-- /TOC -->
 ---
+
 ## install
 
-Texthero has special requirements as it is not maintained anymore. It is recommended to install it via pip using special arguments:
+**NOTE:** AS texthero and some of the other libraries are out of date, please run this repo with python 3.8 or lower (3.6/3.7 should work fine).
+
+### pip
+
+Install the requirements via pip:
 
 ```bash
 pip install -r requirements.txt
-# helper for texthero
+```
+
+Texthero has special requirements as it is not maintained anymore. If you have problems installing texthero, try the following helper script:
+
+```bash
 bash install_texthero.sh
 ```
 
+### conda
+
+Install the requirements via conda:
+
+```bash
+conda env create -f environment.yml
+conda activate ch-scraper
+```
+*Note: the provided environment.yml file is exported from a working windows environment. If you are on a different OS, you might need to adjust the dependencies.*
 
 ## Updates w.r.t. Original
 
