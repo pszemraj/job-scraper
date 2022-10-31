@@ -278,7 +278,7 @@ def viz_job_data(
 
 
 def load_gensim_word2vec(
-    word2vec_model: str = "'glove-wiki-gigaword-300", verbose=False
+    word2vec_model: str = "glove-wiki-gigaword-300", verbose=False
 ):
 
     logging.info("loading gensim word2vec model {}".format(word2vec_model))
